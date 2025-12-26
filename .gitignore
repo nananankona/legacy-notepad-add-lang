@@ -1,0 +1,11 @@
+build/
+*.exe
+*.obj
+*.res
+*.ilk
+*.pdb
+.vs/
+CMakeSettings.json
+*.user
+.github/
+target/
