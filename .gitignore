@@ -7,5 +7,4 @@ build/
 .vs/
 CMakeSettings.json
 *.user
-.github/
 target/
