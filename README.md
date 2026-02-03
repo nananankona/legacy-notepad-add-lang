@@ -28,10 +28,10 @@ mingw32-make -j4   # or: cmake --build . --config Release
 .\legacy-notepad.exe
 ```
 
-## Architecture (concise)
+## Architecture
 
-- **Entry**: `src/main.cpp` — window class, message loop, wiring modules.
-- **Core**: `src/core` — shared types and globals.
+- **Entry**: `src/main.cpp` - window class, message loop, wiring modules.
+- **Core**: `src/core` - shared types and globals.
 - **Modules** (`src/modules`): `theme` (dark mode), `editor` (RichEdit handling), `file` (I/O & encodings), `ui` (title/status/layout), `background` (GDI+), `dialog` (find/replace/font/transparency), `commands` (menu actions).
 - **Resources**: `src/notepad.rc`, `src/resource.h`, icons/menus/accelerators.
 
