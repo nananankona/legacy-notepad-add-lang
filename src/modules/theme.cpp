@@ -13,7 +13,8 @@
   Controls visual appearance of title bar, menu bar, editor, and status controls.
 */
 
-#include <dwmapi.h>
+//#include <dwmapi.h>
+#include <windows.h>
 #include <uxtheme.h>
 #include <richedit.h>
 #include "theme.h"
@@ -21,7 +22,7 @@
 #include "core/globals.h"
 #include "resource.h"
 
-bool SetTitleBarDark(HWND hwnd, BOOL dark)
+/*bool SetTitleBarDark(HWND hwnd, BOOL dark)
 {
     const DWORD attrs[] = {DWMWA_USE_IMMERSIVE_DARK_MODE, 19};
     bool applied = false;
@@ -29,7 +30,7 @@ bool SetTitleBarDark(HWND hwnd, BOOL dark)
         if (SUCCEEDED(DwmSetWindowAttribute(hwnd, attr, &dark, sizeof(dark))))
             applied = true;
     return applied;
-}
+}*/
 
 bool IsDarkMode()
 {
@@ -156,10 +157,10 @@ void ApplyTheme()
             g_hbrMenuDark = nullptr;
         }
     }
-    SetTitleBarDark(g_hwndMain, dark);
-    SetWindowTheme(g_hwndEditor, dark ? L"DarkMode_Explorer" : nullptr, nullptr);
-    SetWindowTheme(g_hwndStatus, dark ? L"DarkMode_Explorer" : nullptr, nullptr);
-    SetWindowTheme(g_hwndMain, dark ? L"DarkMode_Explorer" : nullptr, nullptr);
+    //SetTitleBarDark(g_hwndMain, dark);
+    //SetWindowTheme(g_hwndEditor, dark ? L"DarkMode_Explorer" : nullptr, nullptr);
+    //SetWindowTheme(g_hwndStatus, dark ? L"DarkMode_Explorer" : nullptr, nullptr);
+    //SetWindowTheme(g_hwndMain, dark ? L"DarkMode_Explorer" : nullptr, nullptr);
     COLORREF bgColor = dark ? RGB(30, 30, 30) : GetSysColor(COLOR_WINDOW);
     COLORREF textColor = dark ? RGB(255, 255, 255) : GetSysColor(COLOR_WINDOWTEXT);
     SendMessageW(g_hwndEditor, EM_SETBKGNDCOLOR, 0, bgColor);

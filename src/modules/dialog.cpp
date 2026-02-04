@@ -231,7 +231,7 @@ void EditReplace()
     }
 }
 
-void EditGoto()
+/*void EditGoto()
 {
     (void)DialogBoxW(nullptr, nullptr, g_hwndMain, [](HWND hDlg, UINT msg, WPARAM wParam, LPARAM) -> INT_PTR
                      {
@@ -280,6 +280,7 @@ void EditGoto()
         }
         return FALSE; });
 }
+*/
 
 void FormatFont()
 {

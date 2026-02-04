@@ -44,8 +44,29 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     {
         g_hwndMain = hwnd;
         DragAcceptFiles(hwnd, TRUE);
-        LoadLibraryW(L"Msftedit.dll");
-        g_hwndEditor = CreateWindowExW(0, MSFTEDIT_CLASS, nullptr,
+        const wchar_t* richEditClass = nullptr;
+        HMODULE hRichEdit = nullptr;
+        hRichEdit = LoadLibraryW(L"Msftedit.dll");
+        if (hRichEdit)
+        {
+            richEditClass = MSFTEDIT_CLASS;
+        }
+        else
+        {
+            hRichEdit = LoadLibraryW(L"Riched20.dll");
+            if (hRichEdit)
+            {
+                richEditClass = RICHEDIT_CLASSW;
+            }
+            else
+            {
+                MessageBoxW(hwnd,
+                    L"Cannot load RichEdit control.\n",
+                    L"Error", MB_ICONERROR | MB_OK);
+                return -1;
+            }
+        }
+        g_hwndEditor = CreateWindowExW(0, richEditClass, nullptr,
                                        WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_HSCROLL | ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_WANTRETURN | ES_NOHIDESEL,
                                        0, 0, 100, 100, hwnd, reinterpret_cast<HMENU>(IDC_EDITOR), GetModuleHandleW(nullptr), nullptr);
         g_origEditorProc = reinterpret_cast<WNDPROC>(SetWindowLongPtrW(g_hwndEditor, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(EditorSubclassProc)));
@@ -307,7 +328,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             EditReplace();
             break;
         case IDM_EDIT_GOTO:
-            EditGoto();
+            //EditGoto();
             break;
         case IDM_EDIT_SELECTALL:
             EditSelectAll();
@@ -483,7 +504,15 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR lpCmdLine, int nCmdShow)
 {
-    SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+    // Enable Per-Monitor DPI Awareness v2 when available. Use runtime check for compatibility with older Windows.
+    typedef BOOL(WINAPI *fnSetProcessDpiAwarenessContext)(DPI_AWARENESS_CONTEXT);
+    HMODULE hUser32 = GetModuleHandleW(L"user32.dll");
+    if (hUser32)
+    {
+        auto setProcDPI = reinterpret_cast<fnSetProcessDpiAwarenessContext>(GetProcAddress(hUser32, "SetProcessDpiAwarenessContext"));
+        if (setProcDPI)
+            setProcDPI(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+    }
 
     HMODULE hUxtheme = LoadLibraryExW(L"uxtheme.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
     if (hUxtheme)
@@ -528,10 +557,10 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR lpCmdLine, int nCmdSh
     RegisterClassExW(&wc);
 
     g_hwndMain = CreateWindowExW(0, L"NotepadClass", L"Untitled - Notepad",
-                                 WS_OVERLAPPEDWINDOW | WS_MAXIMIZEBOX, CW_USEDEFAULT, CW_USEDEFAULT, 800, 600,
+                                 WS_OVERLAPPEDWINDOW | WS_MAXIMIZEBOX, CW_USEDEFAULT, CW_USEDEFAULT, 640, 480,
                                  nullptr, nullptr, hInstance, nullptr);
     g_hAccel = LoadAcceleratorsW(hInstance, MAKEINTRESOURCEW(IDR_ACCEL));
-    SetTitleBarDark(g_hwndMain, IsDarkMode());
+    //SetTitleBarDark(g_hwndMain, IsDarkMode());
     ShowWindow(g_hwndMain, nCmdShow);
     UpdateWindow(g_hwndMain);
 
