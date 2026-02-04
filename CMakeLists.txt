@@ -31,6 +31,7 @@ add_executable(legacy-notepad WIN32
 )
 
 target_include_directories(legacy-notepad PRIVATE ${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/src/modules)
+target_compile_definitions(legacy-notepad PRIVATE UNICODE _UNICODE)
 
 target_link_libraries(legacy-notepad PRIVATE
     comctl32
@@ -52,6 +53,10 @@ if(NOT MSVC)
     add_custom_command(TARGET legacy-notepad POST_BUILD COMMAND ${CMAKE_STRIP} --strip-all $<TARGET_FILE:legacy-notepad>)
 endif()
 
+# Installation
+install(TARGETS legacy-notepad DESTINATION .)
+install(FILES LICENSE README.md DESTINATION .)
+
 # Installer / packaging (CPack with NSIS)
 set(CPACK_GENERATOR "NSIS")
 set(CPACK_PACKAGE_NAME "legacy-notepad")
@@ -66,6 +71,9 @@ set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
 set(CPACK_NSIS_DISPLAY_NAME "Legacy Notepad")
 set(CPACK_NSIS_PACKAGE_NAME "Legacy Notepad")
 set(CPACK_NSIS_URL_INFO_ABOUT "https://github.com/ForLoopCodes/legacy-notepad")
-include(CPack)
+set(CPACK_NSIS_MODIFY_PATH ON)
+set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
+set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}/src/icon.ico")
+set(CPACK_NSIS_MUI_UNIICON "${CMAKE_SOURCE_DIR}/src/icon.ico")
 
-target_compile_definitions(legacy-notepad PRIVATE UNICODE _UNICODE)
+include(CPack)
