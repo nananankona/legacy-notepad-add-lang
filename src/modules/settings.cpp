@@ -21,6 +21,8 @@
 #define SETTINGS_KEY L"Software\\LegacyNotepad"
 #define FONT_NAME_VALUE L"FontName"
 #define FONT_SIZE_VALUE L"FontSize"
+#define MIN_FONT_SIZE 8
+#define MAX_FONT_SIZE 72
 
 void LoadFontSettings()
 {
@@ -38,7 +40,7 @@ void LoadFontSettings()
         size = sizeof(fontSize);
         if (RegQueryValueExW(hKey, FONT_SIZE_VALUE, nullptr, nullptr, reinterpret_cast<LPBYTE>(&fontSize), &size) == ERROR_SUCCESS)
         {
-            if (fontSize >= 8 && fontSize <= 72)
+            if (fontSize >= MIN_FONT_SIZE && fontSize <= MAX_FONT_SIZE)
             {
                 g_state.fontSize = static_cast<int>(fontSize);
             }
