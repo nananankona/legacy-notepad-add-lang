@@ -37,3 +37,4 @@ extern HBRUSH g_hbrStatusDark;
 extern HBRUSH g_hbrMenuDark;
 extern PAGESETUPDLGW g_pageSetup;
 extern std::wstring g_statusTexts[4];
+extern HICON g_hCustomIcon;

@@ -369,6 +369,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         case IDM_VIEW_BG_POS_FILL:
             SetBackgroundPosition(BgPosition::Fill);
             break;
+        case IDM_VIEW_ICON_CHANGE:
+            ViewChangeIcon();
+            break;
+        case IDM_VIEW_ICON_RESET:
+            ViewResetIcon();
+            break;
         case IDM_HELP_ABOUT:
             HelpAbout();
             break;
@@ -436,6 +442,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         {
             DeleteObject(g_bgBitmap);
             g_bgBitmap = nullptr;
+        }
+        if (g_hCustomIcon)
+        {
+            DestroyIcon(g_hCustomIcon);
+            g_hCustomIcon = nullptr;
         }
         PostQuitMessage(0);
         return 0;

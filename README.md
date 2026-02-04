@@ -11,6 +11,7 @@ A lightweight, 25x fast, Windows notepad alternative built with C++17 and Win32 
 - **Rich editing**: word wrap toggle, font selection, zoom, time/date stamp, find/replace/goto.
 - **Backgrounds**: optional image with tile/stretch/fit/fill/anchor modes and opacity control. (known issues)
 - **Printing**: print and page setup dialogs.
+- **Customizable icon**: change the application icon to any .ico file, including classic Notepad icons.
 
 ## Requirements
 
@@ -28,10 +29,10 @@ mingw32-make -j4   # or: cmake --build . --config Release
 .\legacy-notepad.exe
 ```
 
-## Architecture (concise)
+## Architecture
 
-- **Entry**: `src/main.cpp` — window class, message loop, wiring modules.
-- **Core**: `src/core` — shared types and globals.
+- **Entry**: `src/main.cpp` - window class, message loop, wiring modules.
+- **Core**: `src/core` - shared types and globals.
 - **Modules** (`src/modules`): `theme` (dark mode), `editor` (RichEdit handling), `file` (I/O & encodings), `ui` (title/status/layout), `background` (GDI+), `dialog` (find/replace/font/transparency), `commands` (menu actions).
 - **Resources**: `src/notepad.rc`, `src/resource.h`, icons/menus/accelerators.
 
@@ -64,7 +65,7 @@ CMakeLists.txt
 
 ## License
 
-MIT License — see [LICENSE](LICENSE).
+MIT License - see [LICENSE](LICENSE).
 
 ## Notes
 

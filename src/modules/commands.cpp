@@ -230,6 +230,45 @@ void ViewStatusBar()
     UpdateStatus();
 }
 
+void ViewChangeIcon()
+{
+    wchar_t path[MAX_PATH] = {0};
+    OPENFILENAMEW ofn = {sizeof(ofn)};
+    ofn.hwndOwner = g_hwndMain;
+    ofn.lpstrFilter = L"Icon Files (*.ico)\0*.ico\0All Files (*.*)\0*.*\0";
+    ofn.lpstrFile = path;
+    ofn.nMaxFile = MAX_PATH;
+    ofn.Flags = OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
+    if (GetOpenFileNameW(&ofn))
+    {
+        HICON hNewIcon = static_cast<HICON>(LoadImageW(nullptr, path, IMAGE_ICON, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE));
+        if (hNewIcon)
+        {
+            if (g_hCustomIcon && g_hCustomIcon != hNewIcon)
+                DestroyIcon(g_hCustomIcon);
+            g_hCustomIcon = hNewIcon;
+            g_state.customIconPath = path;
+            SendMessageW(g_hwndMain, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(hNewIcon));
+            SendMessageW(g_hwndMain, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(hNewIcon));
+        }
+        else
+            MessageBoxW(g_hwndMain, L"Failed to load icon file.", APP_NAME, MB_ICONERROR);
+    }
+}
+
+void ViewResetIcon()
+{
+    if (g_hCustomIcon)
+    {
+        DestroyIcon(g_hCustomIcon);
+        g_hCustomIcon = nullptr;
+    }
+    g_state.customIconPath.clear();
+    HICON hDefaultIcon = LoadIconW(GetModuleHandleW(nullptr), MAKEINTRESOURCEW(IDI_NOTEPAD));
+    SendMessageW(g_hwndMain, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(hDefaultIcon));
+    SendMessageW(g_hwndMain, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(hDefaultIcon));
+}
+
 void HelpCheckUpdates()
 {
     ShellExecuteW(nullptr, L"open", L"https://github.com/ForLoopCodes/legacy-notepad/releases/latest", nullptr, nullptr, SW_SHOWNORMAL);
