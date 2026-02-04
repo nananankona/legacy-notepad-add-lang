@@ -9,32 +9,20 @@
   ███         ▀██████▀    ███    ███ █████▄▄██  ▀██████▀   ▀██████▀   ▄████▀
                           ███    ███ ▀
 
-  Legacy Notepad - A fast, lightweight text editor built with C++ and Win32 API.
-  Application entry point containing WndProc message handler and wWinMain startup.
+  Main entry point and window procedure for Legacy Notepad text editor application.
+  Coordinates all modules and handles Windows message loop and command dispatching.
 */
 
-#define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
 #include <windows.h>
 #include <windowsx.h>
 #include <commctrl.h>
 #include <commdlg.h>
-#include <shellapi.h>
-#include <shlwapi.h>
 #include <richedit.h>
+#include <shlwapi.h>
+#include <shellapi.h>
 #include <dwmapi.h>
 #include <uxtheme.h>
 #include <gdiplus.h>
-
-#ifdef _MSC_VER
-#pragma comment(lib, "comctl32.lib")
-#pragma comment(lib, "comdlg32.lib")
-#pragma comment(lib, "shlwapi.lib")
-#pragma comment(lib, "shell32.lib")
-#pragma comment(lib, "dwmapi.lib")
-#pragma comment(lib, "uxtheme.lib")
-#pragma comment(lib, "gdiplus.lib")
-#endif
 
 #include "resource.h"
 #include "core/types.h"
@@ -64,8 +52,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                                        WS_CHILD | WS_VISIBLE | SBARS_SIZEGRIP, 0, 0, 0, 0, hwnd, reinterpret_cast<HMENU>(IDC_STATUSBAR), GetModuleHandleW(nullptr), nullptr);
         g_origStatusProc = reinterpret_cast<WNDPROC>(SetWindowLongPtrW(g_hwndStatus, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(StatusSubclassProc)));
         SendMessageW(g_hwndEditor, EM_SETLIMITTEXT, 0, 0);
-        LRESULT mask = SendMessageW(g_hwndEditor, EM_GETEVENTMASK, 0, 0);
-        SendMessageW(g_hwndEditor, EM_SETEVENTMASK, 0, mask | ENM_CHANGE);
+        SendMessageW(g_hwndEditor, EM_SETEVENTMASK, 0, ENM_CHANGE);
         ApplyFont();
         SetupStatusBarParts();
         UpdateTitle();
@@ -79,8 +66,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         if (IsDarkMode())
         {
             UAHMENU *pUDM = reinterpret_cast<UAHMENU *>(lParam);
-            MENUBARINFO mbi{};
-            mbi.cbSize = sizeof(mbi);
+            MENUBARINFO mbi = {sizeof(mbi)};
             if (GetMenuBarInfo(hwnd, OBJID_MENU, 0, &mbi))
             {
                 RECT rcWindow;
@@ -99,23 +85,19 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         {
             UAHDRAWMENUITEM *pUDMI = reinterpret_cast<UAHDRAWMENUITEM *>(lParam);
             wchar_t szText[256] = {};
-            MENUITEMINFOW mii{};
-            mii.cbSize = sizeof(mii);
+            MENUITEMINFOW mii = {sizeof(mii)};
             mii.fMask = MIIM_STRING;
             mii.dwTypeData = szText;
             mii.cch = 255;
             GetMenuItemInfoW(pUDMI->um.hMenu, pUDMI->umi.iPosition, TRUE, &mii);
             COLORREF bgColor = RGB(45, 45, 45);
             COLORREF textColor = RGB(255, 255, 255);
-            bool isHot = (pUDMI->dis.itemState & ODS_HOTLIGHT) != 0;
-            bool isSelected = (pUDMI->dis.itemState & ODS_SELECTED) != 0;
-            if (isHot || isSelected)
+            if ((pUDMI->dis.itemState & ODS_HOTLIGHT) || (pUDMI->dis.itemState & ODS_SELECTED))
                 bgColor = RGB(65, 65, 65);
             HBRUSH hbr = CreateSolidBrush(bgColor);
             FillRect(pUDMI->um.hdc, &pUDMI->dis.rcItem, hbr);
             DeleteObject(hbr);
-            NONCLIENTMETRICSW ncm{};
-            ncm.cbSize = sizeof(ncm);
+            NONCLIENTMETRICSW ncm = {sizeof(ncm)};
             SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, sizeof(ncm), &ncm, 0);
             HFONT hFont = CreateFontIndirectW(&ncm.lfMenuFont);
             HFONT hOldFont = reinterpret_cast<HFONT>(SelectObject(pUDMI->um.hdc, hFont));
@@ -136,8 +118,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         if (IsDarkMode())
         {
             HDC hdc = GetWindowDC(hwnd);
-            MENUBARINFO mbi{};
-            mbi.cbSize = sizeof(mbi);
+            MENUBARINFO mbi = {sizeof(mbi)};
             if (GetMenuBarInfo(hwnd, OBJID_MENU, 0, &mbi))
             {
                 RECT rcWindow;
@@ -148,8 +129,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 FillRect(hdc, &rcMenuBar, g_hbrMenuDark ? g_hbrMenuDark : reinterpret_cast<HBRUSH>(GetStockObject(BLACK_BRUSH)));
                 HMENU hMenu = GetMenu(hwnd);
                 int itemCount = GetMenuItemCount(hMenu);
-                NONCLIENTMETRICSW ncm{};
-                ncm.cbSize = sizeof(ncm);
+                NONCLIENTMETRICSW ncm = {sizeof(ncm)};
                 SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, sizeof(ncm), &ncm, 0);
                 HFONT hFont = CreateFontIndirectW(&ncm.lfMenuFont);
                 HFONT hOldFont = reinterpret_cast<HFONT>(SelectObject(hdc, hFont));
@@ -163,8 +143,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                         rcItem = mbi.rcBar;
                         OffsetRect(&rcItem, -rcWindow.left, -rcWindow.top);
                         wchar_t szText[256] = {};
-                        MENUITEMINFOW mii{};
-                        mii.cbSize = sizeof(mii);
+                        MENUITEMINFOW mii = {sizeof(mii)};
                         mii.fMask = MIIM_STRING;
                         mii.dwTypeData = szText;
                         mii.cch = 255;
@@ -190,8 +169,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         HDROP hDrop = reinterpret_cast<HDROP>(wParam);
         wchar_t path[MAX_PATH];
         if (DragQueryFileW(hDrop, 0, path, MAX_PATH))
+        {
             if (ConfirmDiscard())
                 LoadFile(path);
+        }
         DragFinish(hDrop);
         return 0;
     }
@@ -205,8 +186,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_CTLCOLOREDIT:
         if (g_state.background.enabled && g_bgImage && reinterpret_cast<HWND>(lParam) == g_hwndEditor)
         {
-            HDC hdc = reinterpret_cast<HDC>(wParam);
-            SetBkMode(hdc, TRANSPARENT);
+            SetBkMode(reinterpret_cast<HDC>(wParam), TRANSPARENT);
             return reinterpret_cast<LRESULT>(GetStockObject(NULL_BRUSH));
         }
         break;
@@ -243,22 +223,15 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     }
     case WM_COMMAND:
     {
-        WORD code = HIWORD(wParam);
-        HWND source = reinterpret_cast<HWND>(lParam);
-        if (source == g_hwndEditor && code == EN_CHANGE)
-        {
-            g_state.modified = true;
-            UpdateTitle();
-            UpdateStatus();
-            return 0;
-        }
         WORD cmd = LOWORD(wParam);
         if (cmd >= IDM_FILE_RECENT_BASE && cmd < IDM_FILE_RECENT_BASE + MAX_RECENT_FILES)
         {
             int idx = cmd - IDM_FILE_RECENT_BASE;
             if (idx < static_cast<int>(g_state.recentFiles.size()))
+            {
                 if (ConfirmDiscard())
                     LoadFile(g_state.recentFiles[idx]);
+            }
             return 0;
         }
         switch (cmd)
@@ -396,9 +369,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         case IDM_VIEW_BG_POS_FILL:
             SetBackgroundPosition(BgPosition::Fill);
             break;
-        case IDM_HELP_CHECKUPDATES:
-            HelpCheckUpdates();
-            break;
         case IDM_HELP_ABOUT:
             HelpAbout();
             break;
@@ -408,27 +378,30 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_NOTIFY:
     {
         NMHDR *pnmh = reinterpret_cast<NMHDR *>(lParam);
-        if (pnmh->hwndFrom == g_hwndStatus && pnmh->code == NM_CUSTOMDRAW && IsDarkMode())
+        if (pnmh->hwndFrom == g_hwndStatus && pnmh->code == NM_CUSTOMDRAW)
         {
-            LPNMCUSTOMDRAW lpnmcd = reinterpret_cast<LPNMCUSTOMDRAW>(lParam);
-            if (lpnmcd->dwDrawStage == CDDS_PREPAINT)
-                return CDRF_NOTIFYITEMDRAW;
-            if (lpnmcd->dwDrawStage == CDDS_ITEMPREPAINT)
+            if (IsDarkMode())
             {
-                HBRUSH hbr = g_hbrStatusDark ? g_hbrStatusDark : CreateSolidBrush(RGB(45, 45, 45));
-                FillRect(lpnmcd->hdc, &lpnmcd->rc, hbr);
-                if (!g_hbrStatusDark && hbr)
-                    DeleteObject(hbr);
-                SetBkMode(lpnmcd->hdc, TRANSPARENT);
-                SetBkColor(lpnmcd->hdc, RGB(45, 45, 45));
-                SetTextColor(lpnmcd->hdc, RGB(255, 255, 255));
-                wchar_t buf[256] = {};
-                int part = static_cast<int>(lpnmcd->dwItemSpec);
-                SendMessageW(g_hwndStatus, SB_GETTEXTW, part, reinterpret_cast<LPARAM>(buf));
-                RECT rc = lpnmcd->rc;
-                rc.left += 6;
-                DrawTextW(lpnmcd->hdc, buf, -1, &rc, DT_SINGLELINE | DT_VCENTER | DT_LEFT | DT_END_ELLIPSIS);
-                return CDRF_SKIPDEFAULT;
+                LPNMCUSTOMDRAW lpnmcd = reinterpret_cast<LPNMCUSTOMDRAW>(lParam);
+                if (lpnmcd->dwDrawStage == CDDS_PREPAINT)
+                    return CDRF_NOTIFYITEMDRAW;
+                if (lpnmcd->dwDrawStage == CDDS_ITEMPREPAINT)
+                {
+                    HBRUSH hbr = g_hbrStatusDark ? g_hbrStatusDark : CreateSolidBrush(RGB(45, 45, 45));
+                    FillRect(lpnmcd->hdc, &lpnmcd->rc, hbr);
+                    if (!g_hbrStatusDark && hbr)
+                        DeleteObject(hbr);
+                    SetBkMode(lpnmcd->hdc, TRANSPARENT);
+                    SetBkColor(lpnmcd->hdc, RGB(45, 45, 45));
+                    SetTextColor(lpnmcd->hdc, RGB(255, 255, 255));
+                    wchar_t buf[256] = {};
+                    int part = static_cast<int>(lpnmcd->dwItemSpec);
+                    SendMessageW(g_hwndStatus, SB_GETTEXTW, part, reinterpret_cast<LPARAM>(buf));
+                    RECT rc = lpnmcd->rc;
+                    rc.left += 6;
+                    DrawTextW(lpnmcd->hdc, buf, -1, &rc, DT_SINGLELINE | DT_VCENTER | DT_LEFT | DT_END_ELLIPSIS);
+                    return CDRF_SKIPDEFAULT;
+                }
             }
         }
         if (pnmh->hwndFrom == g_hwndEditor && pnmh->code == EN_CHANGE)
@@ -484,38 +457,35 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR lpCmdLine, int nCmdShow)
 {
     SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+
     HMODULE hUxtheme = LoadLibraryExW(L"uxtheme.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
     if (hUxtheme)
     {
         BOOL useDark = IsDarkMode();
-#ifdef __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wcast-function-type"
-#endif
-        auto allowDarkModeForApp = reinterpret_cast<fnAllowDarkModeForApp>(GetProcAddress(hUxtheme, MAKEINTRESOURCEA(132)));
+        typedef void(WINAPI * fnAllowDarkModeForApp)(BOOL allow);
+        fnAllowDarkModeForApp allowDarkModeForApp = (fnAllowDarkModeForApp)(void *)GetProcAddress(hUxtheme, MAKEINTRESOURCEA(132));
         if (allowDarkModeForApp)
             allowDarkModeForApp(useDark);
-        auto setPreferredAppMode = reinterpret_cast<fnSetPreferredAppMode>(GetProcAddress(hUxtheme, MAKEINTRESOURCEA(135)));
+        typedef PreferredAppMode(WINAPI * fnSetPreferredAppMode)(PreferredAppMode appMode);
+        fnSetPreferredAppMode setPreferredAppMode = (fnSetPreferredAppMode)(void *)GetProcAddress(hUxtheme, MAKEINTRESOURCEA(135));
         if (setPreferredAppMode)
             setPreferredAppMode(useDark ? ForceDark : ForceLight);
-        auto refreshPolicy = reinterpret_cast<fnRefreshImmersiveColorPolicyState>(GetProcAddress(hUxtheme, MAKEINTRESOURCEA(104)));
+        typedef void(WINAPI * fnRefreshImmersiveColorPolicyState)();
+        fnRefreshImmersiveColorPolicyState refreshPolicy = (fnRefreshImmersiveColorPolicyState)(void *)GetProcAddress(hUxtheme, MAKEINTRESOURCEA(104));
         if (refreshPolicy)
             refreshPolicy();
-        auto flushMenuThemes = reinterpret_cast<fnFlushMenuThemes>(GetProcAddress(hUxtheme, MAKEINTRESOURCEA(136)));
+        typedef void(WINAPI * fnFlushMenuThemes)();
+        fnFlushMenuThemes flushMenuThemes = (fnFlushMenuThemes)(void *)GetProcAddress(hUxtheme, MAKEINTRESOURCEA(136));
         if (flushMenuThemes)
             flushMenuThemes();
-#ifdef __GNUC__
-#pragma GCC diagnostic pop
-#endif
     }
+
     Gdiplus::GdiplusStartupInput gdiplusStartupInput;
     Gdiplus::GdiplusStartup(&g_gdiplusToken, &gdiplusStartupInput, nullptr);
-    INITCOMMONCONTROLSEX icc{};
-    icc.dwSize = sizeof(icc);
-    icc.dwICC = ICC_BAR_CLASSES;
+    INITCOMMONCONTROLSEX icc = {sizeof(icc), ICC_BAR_CLASSES};
     InitCommonControlsEx(&icc);
-    WNDCLASSEXW wc{};
-    wc.cbSize = sizeof(wc);
+
+    WNDCLASSEXW wc = {sizeof(wc)};
     wc.style = CS_HREDRAW | CS_VREDRAW;
     wc.lpfnWndProc = WndProc;
     wc.hInstance = hInstance;
@@ -526,6 +496,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR lpCmdLine, int nCmdSh
     wc.lpszClassName = L"NotepadClass";
     wc.hIconSm = LoadIconW(hInstance, MAKEINTRESOURCEW(IDI_NOTEPAD));
     RegisterClassExW(&wc);
+
     g_hwndMain = CreateWindowExW(0, L"NotepadClass", L"Untitled - Notepad",
                                  WS_OVERLAPPEDWINDOW | WS_MAXIMIZEBOX, CW_USEDEFAULT, CW_USEDEFAULT, 800, 600,
                                  nullptr, nullptr, hInstance, nullptr);
@@ -533,6 +504,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR lpCmdLine, int nCmdSh
     SetTitleBarDark(g_hwndMain, IsDarkMode());
     ShowWindow(g_hwndMain, nCmdShow);
     UpdateWindow(g_hwndMain);
+
     if (lpCmdLine && lpCmdLine[0])
     {
         std::wstring path = lpCmdLine;
@@ -540,6 +512,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR lpCmdLine, int nCmdSh
             path = path.substr(1, path.size() - 2);
         LoadFile(path);
     }
+
     MSG msg;
     while (GetMessageW(&msg, nullptr, 0, 0))
     {
@@ -551,6 +524,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR lpCmdLine, int nCmdSh
             DispatchMessageW(&msg);
         }
     }
+
     Gdiplus::GdiplusShutdown(g_gdiplusToken);
     return static_cast<int>(msg.wParam);
 }
