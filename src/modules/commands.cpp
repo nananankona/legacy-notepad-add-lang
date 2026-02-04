@@ -240,7 +240,7 @@ void ViewChangeIcon()
     ofn.Flags = OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
     if (GetOpenFileNameW(&ofn))
     {
-        HICON hNewIcon = reinterpret_cast<HICON>(LoadImageW(nullptr, path, IMAGE_ICON, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE | LR_SHARED));
+        HICON hNewIcon = reinterpret_cast<HICON>(LoadImageW(nullptr, path, IMAGE_ICON, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE));
         if (hNewIcon)
         {
             if (g_hCustomIcon && g_hCustomIcon != hNewIcon)

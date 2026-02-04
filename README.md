@@ -11,6 +11,7 @@ A lightweight, 25x fast, Windows notepad alternative built with C++17 and Win32 
 - **Rich editing**: word wrap toggle, font selection, zoom, time/date stamp, find/replace/goto.
 - **Backgrounds**: optional image with tile/stretch/fit/fill/anchor modes and opacity control. (known issues)
 - **Printing**: print and page setup dialogs.
+- **Customizable icon**: change the application icon to any .ico file, including classic Notepad icons.
 
 ## Requirements
 
