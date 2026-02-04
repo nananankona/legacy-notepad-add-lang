@@ -78,6 +78,12 @@ BEGIN
         END
         MENUITEM SEPARATOR
         MENUITEM "Window &Transparency...", IDM_VIEW_TRANSPARENCY
+        MENUITEM SEPARATOR
+        POPUP "&Icon"
+        BEGIN
+            MENUITEM "&Change Icon...", IDM_VIEW_ICON_CHANGE
+            MENUITEM "&Reset to Default", IDM_VIEW_ICON_RESET
+        END
     END
     POPUP "&Help"
     BEGIN

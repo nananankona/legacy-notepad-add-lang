@@ -121,6 +121,7 @@ struct AppState
     HFONT hFont = nullptr;
     std::deque<std::wstring> recentFiles;
     BackgroundSettings background;
+    std::wstring customIconPath;
 };
 
 typedef BOOL(WINAPI *fnAllowDarkModeForWindow)(HWND hWnd, BOOL allow);

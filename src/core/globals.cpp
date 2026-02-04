@@ -32,3 +32,4 @@ HBRUSH g_hbrStatusDark = nullptr;
 HBRUSH g_hbrMenuDark = nullptr;
 PAGESETUPDLGW g_pageSetup = {sizeof(g_pageSetup)};
 std::wstring g_statusTexts[4];
+HICON g_hCustomIcon = nullptr;
