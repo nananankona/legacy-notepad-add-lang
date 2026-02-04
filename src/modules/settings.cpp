@@ -24,6 +24,7 @@
 #define FONT_WEIGHT_VALUE L"FontWeight"
 #define FONT_ITALIC_VALUE L"FontItalic"
 #define FONT_UNDERLINE_VALUE L"FontUnderline"
+#define ALWAYS_ON_TOP_VALUE L"AlwaysOnTop"
 #define MIN_FONT_SIZE 8
 #define MAX_FONT_SIZE 72
 
@@ -70,6 +71,13 @@ void LoadFontSettings()
             g_state.fontUnderline = (underline != 0);
         }
 
+        DWORD top = 0;
+        size = sizeof(top);
+        if (RegQueryValueExW(hKey, ALWAYS_ON_TOP_VALUE, nullptr, nullptr, reinterpret_cast<LPBYTE>(&top), &size) == ERROR_SUCCESS)
+        {
+            g_state.alwaysOnTop = (top != 0);
+        }
+
         RegCloseKey(hKey);
     }
 }
@@ -102,6 +110,11 @@ void SaveFontSettings()
         RegSetValueExW(hKey, FONT_UNDERLINE_VALUE, 0, REG_DWORD,
                        reinterpret_cast<const BYTE *>(&underline),
                        sizeof(underline));
+
+        DWORD top = g_state.alwaysOnTop ? 1 : 0;
+        RegSetValueExW(hKey, ALWAYS_ON_TOP_VALUE, 0, REG_DWORD,
+                       reinterpret_cast<const BYTE *>(&top),
+                       sizeof(top));
 
         RegCloseKey(hKey);
     }

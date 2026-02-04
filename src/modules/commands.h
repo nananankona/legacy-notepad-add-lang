@@ -38,6 +38,7 @@ void ViewZoomIn();
 void ViewZoomOut();
 void ViewZoomDefault();
 void ViewStatusBar();
+void ViewAlwaysOnTop();
 void ViewChangeIcon();
 void ViewResetIcon();
 void HelpCheckUpdates();

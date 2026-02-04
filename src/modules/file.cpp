@@ -15,6 +15,7 @@
 
 #include "file.h"
 #include "core/globals.h"
+#include "lang/lang.h"
 #include "editor.h"
 #include "ui.h"
 #include "resource.h"
@@ -23,32 +24,34 @@
 
 const wchar_t *GetEncodingName(Encoding e)
 {
+    const auto &lang = GetLangStrings();
     switch (e)
     {
     case Encoding::UTF8:
-        return L"UTF-8";
+        return lang.encodingUTF8.c_str();
     case Encoding::UTF8BOM:
-        return L"UTF-8 with BOM";
+        return lang.encodingUTF8BOM.c_str();
     case Encoding::UTF16LE:
-        return L"UTF-16 LE";
+        return lang.encodingUTF16LE.c_str();
     case Encoding::UTF16BE:
-        return L"UTF-16 BE";
+        return lang.encodingUTF16BE.c_str();
     case Encoding::ANSI:
-        return L"ANSI";
+        return lang.encodingANSI.c_str();
     }
     return L"";
 }
 
 const wchar_t *GetLineEndingName(LineEnding le)
 {
+    const auto &lang = GetLangStrings();
     switch (le)
     {
     case LineEnding::CRLF:
-        return L"Windows (CRLF)";
+        return lang.lineEndingCRLF.c_str();
     case LineEnding::LF:
-        return L"Unix (LF)";
+        return lang.lineEndingLF.c_str();
     case LineEnding::CR:
-        return L"Macintosh (CR)";
+        return lang.lineEndingCR.c_str();
     }
     return L"";
 }
@@ -218,11 +221,12 @@ std::vector<BYTE> EncodeText(const std::wstring &text, Encoding enc, LineEnding 
 
 void LoadFile(const std::wstring &path)
 {
+    const auto &lang = GetLangStrings();
     HANDLE hFile = CreateFileW(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr,
                                OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
     if (hFile == INVALID_HANDLE_VALUE)
     {
-        MessageBoxW(g_hwndMain, L"Cannot open file.", L"Error", MB_ICONERROR);
+        MessageBoxW(g_hwndMain, lang.msgCannotOpenFile.c_str(), lang.msgError.c_str(), MB_ICONERROR);
         return;
     }
     DWORD size = GetFileSize(hFile, nullptr);
@@ -244,13 +248,14 @@ void LoadFile(const std::wstring &path)
 
 void SaveToPath(const std::wstring &path)
 {
+    const auto &lang = GetLangStrings();
     std::wstring text = GetEditorText();
     std::vector<BYTE> data = EncodeText(text, g_state.encoding, g_state.lineEnding);
     HANDLE hFile = CreateFileW(path.c_str(), GENERIC_WRITE, 0, nullptr,
                                CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
     if (hFile == INVALID_HANDLE_VALUE)
     {
-        MessageBoxW(g_hwndMain, L"Cannot save file.", L"Error", MB_ICONERROR);
+        MessageBoxW(g_hwndMain, lang.msgCannotSaveFile.c_str(), lang.msgError.c_str(), MB_ICONERROR);
         return;
     }
     DWORD written = 0;
@@ -294,6 +299,7 @@ void UpdateRecentFilesMenu()
     }
     if (g_state.recentFiles.empty())
         return;
+    const auto &lang = GetLangStrings();
     hRecentMenu = CreatePopupMenu();
     int id = IDM_FILE_RECENT_BASE;
     for (const auto &file : g_state.recentFiles)
@@ -301,5 +307,5 @@ void UpdateRecentFilesMenu()
         std::wstring display = PathFindFileNameW(file.c_str());
         AppendMenuW(hRecentMenu, MF_STRING, id++, display.c_str());
     }
-    InsertMenuW(hFileMenu, 5, MF_BYPOSITION | MF_POPUP, reinterpret_cast<UINT_PTR>(hRecentMenu), L"Recent Files");
+    InsertMenuW(hFileMenu, 5, MF_BYPOSITION | MF_POPUP, reinterpret_cast<UINT_PTR>(hRecentMenu), lang.menuRecentFiles.c_str());
 }

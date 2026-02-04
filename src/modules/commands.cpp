@@ -18,7 +18,9 @@
 #include "editor.h"
 #include "file.h"
 #include "ui.h"
+#include "settings.h"
 #include "resource.h"
+#include "lang/lang.h"
 #include <commdlg.h>
 #include <shlwapi.h>
 #include <shellapi.h>
@@ -28,11 +30,21 @@ bool ConfirmDiscard()
 {
     if (!g_state.modified)
         return true;
-    if (g_state.filePath.empty() && GetWindowTextLengthW(g_hwndEditor) == 0)
-        return true;
-    std::wstring filename = g_state.filePath.empty() ? L"Untitled" : PathFindFileNameW(g_state.filePath.c_str());
-    std::wstring msg = L"Do you want to save changes to " + filename + L"?";
-    int result = MessageBoxW(g_hwndMain, msg.c_str(), APP_NAME, MB_YESNOCANCEL | MB_ICONWARNING);
+    //  untitled and empty, don't ask to save
+    if (g_state.filePath.empty())
+    {
+        std::wstring text = GetEditorText();
+        if (text.empty())
+            return true;
+    }
+    const auto &lang = GetLangStrings();
+    std::wstring filename = g_state.filePath.empty() ? lang.untitled : PathFindFileNameW(g_state.filePath.c_str());
+    std::wstring msg;
+    msg.reserve(lang.msgSaveChanges.size() + filename.size() + 2);
+    msg = lang.msgSaveChanges;
+    msg += filename;
+    msg += L"?";
+    int result = MessageBoxW(g_hwndMain, msg.c_str(), lang.appName.c_str(), MB_YESNOCANCEL | MB_ICONWARNING);
     if (result == IDYES)
     {
         FileSave();
@@ -105,7 +117,8 @@ void FilePrint()
     HDC hDC = pd.hDC;
     DOCINFOW di = {};
     di.cbSize = sizeof(di);
-    std::wstring docName = g_state.filePath.empty() ? L"Untitled" : PathFindFileNameW(g_state.filePath.c_str());
+    const auto &lang = GetLangStrings();
+    std::wstring docName = g_state.filePath.empty() ? lang.untitled : PathFindFileNameW(g_state.filePath.c_str());
     di.lpszDocName = docName.c_str();
     if (StartDocW(hDC, &di) > 0)
     {
@@ -239,6 +252,7 @@ void ViewStatusBar()
 
 void ViewChangeIcon()
 {
+    const auto &lang = GetLangStrings();
     wchar_t path[MAX_PATH] = {0};
     OPENFILENAMEW ofn = {};
     ofn.lStructSize = sizeof(ofn);
@@ -260,7 +274,7 @@ void ViewChangeIcon()
             SendMessageW(g_hwndMain, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(hNewIcon));
         }
         else
-            MessageBoxW(g_hwndMain, L"Failed to load icon file.", APP_NAME, MB_ICONERROR);
+            MessageBoxW(g_hwndMain, L"Failed to load icon file.", lang.appName.c_str(), MB_ICONERROR);
     }
 }
 
@@ -280,4 +294,12 @@ void ViewResetIcon()
 void HelpCheckUpdates()
 {
     ShellExecuteW(nullptr, L"open", L"https://github.com/ForLoopCodes/legacy-notepad/releases/latest", nullptr, nullptr, SW_SHOWNORMAL);
+}
+
+void ViewAlwaysOnTop()
+{
+    g_state.alwaysOnTop = !g_state.alwaysOnTop;
+    CheckMenuItem(GetMenu(g_hwndMain), IDM_VIEW_ALWAYSONTOP, g_state.alwaysOnTop ? MF_CHECKED : MF_UNCHECKED);
+    SetWindowPos(g_hwndMain, g_state.alwaysOnTop ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+    SaveFontSettings();
 }

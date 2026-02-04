@@ -120,6 +120,7 @@ struct AppState
     bool fontItalic = false;
     bool fontUnderline = false;
     BYTE windowOpacity = 255;
+    bool alwaysOnTop = false;
     bool closing = false;
     HFONT hFont = nullptr;
     std::deque<std::wstring> recentFiles;

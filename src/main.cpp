@@ -35,6 +35,8 @@
 #include "modules/dialog.h"
 #include "modules/commands.h"
 #include "modules/settings.h"
+#include "modules/menu.h"
+#include "lang/lang.h"
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -77,6 +79,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         SendMessageW(g_hwndEditor, EM_SETEVENTMASK, 0, ENM_CHANGE | ENM_SELCHANGE);
         ApplyFont();
         SetupStatusBarParts();
+        UpdateMenuStrings();
+        UpdateLanguageMenu();
+        CheckMenuItem(GetMenu(g_hwndMain), IDM_VIEW_ALWAYSONTOP, g_state.alwaysOnTop ? MF_CHECKED : MF_UNCHECKED);
+        if (g_state.alwaysOnTop)
+            SetWindowPos(g_hwndMain, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
         UpdateTitle();
         UpdateStatus();
         ApplyTheme();
@@ -360,6 +367,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         case IDM_VIEW_TRANSPARENCY:
             ViewTransparency();
             break;
+        case IDM_VIEW_ALWAYSONTOP:
+            ViewAlwaysOnTop();
+            break;
         case IDM_VIEW_BG_SELECT:
             ViewSelectBackground();
             break;
@@ -407,6 +417,30 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             break;
         case IDM_VIEW_BG_POS_FILL:
             SetBackgroundPosition(BgPosition::Fill);
+            break;
+        case IDM_VIEW_LANG_EN:
+            if (g_hwndFindDlg)
+            {
+                DestroyWindow(g_hwndFindDlg);
+                g_hwndFindDlg = nullptr;
+            }
+            SetLanguage(LangID::EN);
+            UpdateMenuStrings();
+            UpdateLanguageMenu();
+            UpdateTitle();
+            UpdateStatus();
+            break;
+        case IDM_VIEW_LANG_JA:
+            if (g_hwndFindDlg)
+            {
+                DestroyWindow(g_hwndFindDlg);
+                g_hwndFindDlg = nullptr;
+            }
+            SetLanguage(LangID::JA);
+            UpdateMenuStrings();
+            UpdateLanguageMenu();
+            UpdateTitle();
+            UpdateStatus();
             break;
         case IDM_VIEW_ICON_CHANGE:
             ViewChangeIcon();
@@ -504,6 +538,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR lpCmdLine, int nCmdShow)
 {
+    InitLanguage();
     typedef BOOL(WINAPI * fnSetProcessDpiAwarenessContext)(DPI_AWARENESS_CONTEXT);
     HMODULE hUser32 = GetModuleHandleW(L"user32.dll");
     if (hUser32)
@@ -540,7 +575,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR lpCmdLine, int nCmdSh
     INITCOMMONCONTROLSEX icc = {sizeof(icc), ICC_BAR_CLASSES};
     InitCommonControlsEx(&icc);
 
-    g_hwndMain = CreateWindowExW(0, L"NotepadClass", L"Untitled - Notepad",
+    const auto &lang = GetLangStrings();
+    std::wstring initialTitle = lang.untitled + L" - " + lang.appName;
+    g_hwndMain = CreateWindowExW(0, L"NotepadClass", initialTitle.c_str(),
                                  WS_OVERLAPPEDWINDOW | WS_MAXIMIZEBOX, CW_USEDEFAULT, CW_USEDEFAULT, 640, 480,
                                  nullptr, nullptr, hInstance, nullptr);
     g_hAccel = LoadAcceleratorsW(hInstance, MAKEINTRESOURCEW(IDR_ACCEL));

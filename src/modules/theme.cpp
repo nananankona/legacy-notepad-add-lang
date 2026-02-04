@@ -13,7 +13,6 @@
   Controls visual appearance of title bar, menu bar, editor, and status controls.
 */
 
-// #include <dwmapi.h>
 #include <windows.h>
 #include <uxtheme.h>
 #include <richedit.h>
@@ -41,7 +40,6 @@ bool SetTitleBarDark(HWND hwnd, BOOL dark)
     bool applied = false;
     if (dwmSetWindowAttribute)
     {
-        // Use 20 for Windows 11 and 19 for older Windows 10 versions.
         const DWORD attrs[] = {DWMWA_USE_IMMERSIVE_DARK_MODE, 19};
         for (DWORD attr : attrs)
         {

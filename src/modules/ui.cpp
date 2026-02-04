@@ -15,6 +15,7 @@
 
 #include "ui.h"
 #include "core/globals.h"
+#include "lang/lang.h"
 #include "editor.h"
 #include "file.h"
 #include <commctrl.h>
@@ -22,8 +23,9 @@
 
 void UpdateTitle()
 {
-    std::wstring filename = g_state.filePath.empty() ? L"Untitled" : PathFindFileNameW(g_state.filePath.c_str());
-    std::wstring title = (g_state.modified ? L"*" : L"") + filename + L" - " + APP_NAME;
+    const auto &lang = GetLangStrings();
+    std::wstring filename = g_state.filePath.empty() ? lang.untitled : PathFindFileNameW(g_state.filePath.c_str());
+    std::wstring title = (g_state.modified ? L"*" : L"") + filename + L" - " + lang.appName;
     SetWindowTextW(g_hwndMain, title.c_str());
 }
 
@@ -36,8 +38,9 @@ void UpdateStatus()
     }
     ShowWindow(g_hwndStatus, SW_SHOW);
     auto [line, col] = GetCursorPos();
+    const auto &lang = GetLangStrings();
     wchar_t buf[256];
-    wsprintfW(buf, L" Ln %d, Col %d ", line, col);
+    swprintf(buf, sizeof(buf) / sizeof(wchar_t), L"%s%d%s%d ", lang.statusLn.c_str(), line, lang.statusCol.c_str(), col);
     g_statusTexts[0] = buf;
     g_statusTexts[1] = GetEncodingName(g_state.encoding);
     g_statusTexts[2] = GetLineEndingName(g_state.lineEnding);
