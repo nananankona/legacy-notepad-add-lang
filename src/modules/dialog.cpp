@@ -305,7 +305,7 @@ void FormatFont()
     cf.lStructSize = sizeof(cf);
     cf.hwndOwner = g_hwndMain;
     cf.lpLogFont = &lf;
-    cf.Flags = CF_SCREENFONTS | CF_INITTOLOGFONTSTRUCT | CF_FORCEFONTEXIST;
+    cf.Flags = CF_SCREENFONTS | CF_INITTOLOGFONTSTRUCT | CF_FORCEFONTEXIST | CF_BOTH;
     if (ChooseFontW(&cf))
     {
         g_state.fontName = lf.lfFaceName;

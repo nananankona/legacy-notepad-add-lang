@@ -19,6 +19,7 @@
 #include "theme.h"
 #include "background.h"
 #include "resource.h"
+#include <richedit.h>
 
 std::wstring GetEditorText()
 {
@@ -73,8 +74,16 @@ void ApplyFont()
     ReleaseDC(g_hwndMain, hdc);
     g_state.hFont = CreateFontW(height, 0, 0, 0, g_state.fontWeight, g_state.fontItalic, g_state.fontUnderline, FALSE,
                                 DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY,
-                                FIXED_PITCH | FF_MODERN, g_state.fontName.c_str());
+                                DEFAULT_PITCH | FF_DONTCARE, g_state.fontName.c_str());
     SendMessageW(g_hwndEditor, WM_SETFONT, reinterpret_cast<WPARAM>(g_state.hFont), TRUE);
+
+    // Ensure correct text color in dark mode after font change
+    COLORREF textColor = IsDarkMode() ? RGB(255, 255, 255) : GetSysColor(COLOR_WINDOWTEXT);
+    CHARFORMAT2W cf = {sizeof(cf)};
+    cf.dwMask = CFM_COLOR;
+    cf.crTextColor = textColor;
+    SendMessageW(g_hwndEditor, EM_SETCHARFORMAT, SCF_ALL, reinterpret_cast<LPARAM>(&cf));
+    SendMessageW(g_hwndEditor, EM_SETCHARFORMAT, SCF_DEFAULT, reinterpret_cast<LPARAM>(&cf));
 }
 
 void ApplyZoom()
