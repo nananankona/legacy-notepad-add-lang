@@ -44,7 +44,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     {
         g_hwndMain = hwnd;
         DragAcceptFiles(hwnd, TRUE);
-        const wchar_t* richEditClass = nullptr;
+        const wchar_t *richEditClass = nullptr;
         HMODULE hRichEdit = nullptr;
         hRichEdit = LoadLibraryW(L"Msftedit.dll");
         if (hRichEdit)
@@ -61,8 +61,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             else
             {
                 MessageBoxW(hwnd,
-                    L"Cannot load RichEdit control.\n",
-                    L"Error", MB_ICONERROR | MB_OK);
+                            L"Cannot load RichEdit control.\n",
+                            L"Error", MB_ICONERROR | MB_OK);
                 return -1;
             }
         }
@@ -328,7 +328,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             EditReplace();
             break;
         case IDM_EDIT_GOTO:
-            //EditGoto();
+            EditGoto();
             break;
         case IDM_EDIT_SELECTALL:
             EditSelectAll();
@@ -504,42 +504,21 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR lpCmdLine, int nCmdShow)
 {
-    // Enable Per-Monitor DPI Awareness v2 when available. Use runtime check for compatibility with older Windows.
-    typedef BOOL(WINAPI *fnSetProcessDpiAwarenessContext)(DPI_AWARENESS_CONTEXT);
+    typedef BOOL(WINAPI * fnSetProcessDpiAwarenessContext)(DPI_AWARENESS_CONTEXT);
     HMODULE hUser32 = GetModuleHandleW(L"user32.dll");
     if (hUser32)
     {
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-function-type"
+#endif
         auto setProcDPI = reinterpret_cast<fnSetProcessDpiAwarenessContext>(GetProcAddress(hUser32, "SetProcessDpiAwarenessContext"));
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
         if (setProcDPI)
             setProcDPI(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
     }
-
-    HMODULE hUxtheme = LoadLibraryExW(L"uxtheme.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
-    if (hUxtheme)
-    {
-        BOOL useDark = IsDarkMode();
-        typedef void(WINAPI * fnAllowDarkModeForApp)(BOOL allow);
-        fnAllowDarkModeForApp allowDarkModeForApp = (fnAllowDarkModeForApp)(void *)GetProcAddress(hUxtheme, MAKEINTRESOURCEA(132));
-        if (allowDarkModeForApp)
-            allowDarkModeForApp(useDark);
-        typedef PreferredAppMode(WINAPI * fnSetPreferredAppMode)(PreferredAppMode appMode);
-        fnSetPreferredAppMode setPreferredAppMode = (fnSetPreferredAppMode)(void *)GetProcAddress(hUxtheme, MAKEINTRESOURCEA(135));
-        if (setPreferredAppMode)
-            setPreferredAppMode(useDark ? ForceDark : ForceLight);
-        typedef void(WINAPI * fnRefreshImmersiveColorPolicyState)();
-        fnRefreshImmersiveColorPolicyState refreshPolicy = (fnRefreshImmersiveColorPolicyState)(void *)GetProcAddress(hUxtheme, MAKEINTRESOURCEA(104));
-        if (refreshPolicy)
-            refreshPolicy();
-        typedef void(WINAPI * fnFlushMenuThemes)();
-        fnFlushMenuThemes flushMenuThemes = (fnFlushMenuThemes)(void *)GetProcAddress(hUxtheme, MAKEINTRESOURCEA(136));
-        if (flushMenuThemes)
-            flushMenuThemes();
-    }
-
-    Gdiplus::GdiplusStartupInput gdiplusStartupInput;
-    Gdiplus::GdiplusStartup(&g_gdiplusToken, &gdiplusStartupInput, nullptr);
-    INITCOMMONCONTROLSEX icc = {sizeof(icc), ICC_BAR_CLASSES};
-    InitCommonControlsEx(&icc);
 
     LoadFontSettings();
 
@@ -556,11 +535,15 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR lpCmdLine, int nCmdSh
     wc.hIconSm = LoadIconW(hInstance, MAKEINTRESOURCEW(IDI_NOTEPAD));
     RegisterClassExW(&wc);
 
+    Gdiplus::GdiplusStartupInput gdiplusStartupInput;
+    Gdiplus::GdiplusStartup(&g_gdiplusToken, &gdiplusStartupInput, nullptr);
+    INITCOMMONCONTROLSEX icc = {sizeof(icc), ICC_BAR_CLASSES};
+    InitCommonControlsEx(&icc);
+
     g_hwndMain = CreateWindowExW(0, L"NotepadClass", L"Untitled - Notepad",
                                  WS_OVERLAPPEDWINDOW | WS_MAXIMIZEBOX, CW_USEDEFAULT, CW_USEDEFAULT, 640, 480,
                                  nullptr, nullptr, hInstance, nullptr);
     g_hAccel = LoadAcceleratorsW(hInstance, MAKEINTRESOURCEW(IDR_ACCEL));
-    //SetTitleBarDark(g_hwndMain, IsDarkMode());
     ShowWindow(g_hwndMain, nCmdShow);
     UpdateWindow(g_hwndMain);
 

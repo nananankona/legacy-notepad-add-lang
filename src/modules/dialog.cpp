@@ -19,6 +19,7 @@
 #include "ui.h"
 #include "settings.h"
 #include <commdlg.h>
+#include <richedit.h>
 #include <algorithm>
 #include <cwctype>
 
@@ -231,56 +232,75 @@ void EditReplace()
     }
 }
 
-/*void EditGoto()
+INT_PTR CALLBACK GotoDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    (void)DialogBoxW(nullptr, nullptr, g_hwndMain, [](HWND hDlg, UINT msg, WPARAM wParam, LPARAM) -> INT_PTR
-                     {
-        static HWND hEdit = nullptr;
-        switch (msg)
+    switch (msg)
+    {
+    case WM_COMMAND:
+        if (LOWORD(wParam) == IDOK)
         {
-        case WM_INITDIALOG:
-            SetWindowTextW(hDlg, L"Go To Line");
-            hEdit = CreateWindowExW(WS_EX_CLIENTEDGE, L"EDIT", L"1", WS_CHILD | WS_VISIBLE | ES_NUMBER, 80, 15, 120, 22, hDlg, reinterpret_cast<HMENU>(1001), nullptr, nullptr);
-            CreateWindowExW(0, L"STATIC", L"Line number:", WS_CHILD | WS_VISIBLE, 10, 18, 70, 20, hDlg, nullptr, nullptr, nullptr);
-            CreateWindowExW(0, L"BUTTON", L"OK", WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON, 60, 50, 70, 26, hDlg, reinterpret_cast<HMENU>(IDOK), nullptr, nullptr);
-            CreateWindowExW(0, L"BUTTON", L"Cancel", WS_CHILD | WS_VISIBLE, 140, 50, 70, 26, hDlg, reinterpret_cast<HMENU>(IDCANCEL), nullptr, nullptr);
+            wchar_t buf[32];
+            GetWindowTextW(GetDlgItem(hDlg, 1001), buf, 32);
+            int line = _wtoi(buf);
+            if (line > 0)
             {
-                HFONT hFont = reinterpret_cast<HFONT>(GetStockObject(DEFAULT_GUI_FONT));
-                for (HWND h = GetWindow(hDlg, GW_CHILD); h; h = GetWindow(h, GW_HWNDNEXT))
-                    SendMessageW(h, WM_SETFONT, reinterpret_cast<WPARAM>(hFont), TRUE);
-            }
-            SetFocus(hEdit);
-            return FALSE;
-        case WM_COMMAND:
-            if (LOWORD(wParam) == IDOK)
-            {
-                wchar_t buf[32];
-                GetWindowTextW(hEdit, buf, 32);
-                int line = _wtoi(buf);
-                if (line > 0)
+                LRESULT charIndex = SendMessageW(g_hwndEditor, EM_LINEINDEX, static_cast<WPARAM>(line) - 1, 0);
+                if (charIndex != -1)
                 {
-                    std::wstring text = GetEditorText();
-                    int current = 1;
-                    size_t pos = 0;
-                    for (size_t i = 0; i < text.size() && current < line; ++i)
-                        if (text[i] == L'\n') { ++current; pos = i + 1; }
-                    if (current < line) pos = text.size();
-                    SendMessageW(g_hwndEditor, EM_SETSEL, pos, pos);
+                    SendMessageW(g_hwndEditor, EM_SETSEL, charIndex, charIndex);
                     SendMessageW(g_hwndEditor, EM_SCROLLCARET, 0, 0);
                     SetFocus(g_hwndEditor);
+                    DestroyWindow(hDlg);
                 }
-                EndDialog(hDlg, IDOK);
-                return TRUE;
+                else
+                {
+                    MessageBoxW(hDlg, L"The line number is beyond the total number of lines.", L"Notepad - Goto Line", MB_OK | MB_ICONWARNING);
+                }
             }
-            else if (LOWORD(wParam) == IDCANCEL) { EndDialog(hDlg, IDCANCEL); return TRUE; }
-            break;
-        case WM_CLOSE:
-            EndDialog(hDlg, IDCANCEL);
             return TRUE;
         }
-        return FALSE; });
+        else if (LOWORD(wParam) == IDCANCEL)
+        {
+            DestroyWindow(hDlg);
+            return TRUE;
+        }
+        break;
+    case WM_CLOSE:
+        DestroyWindow(hDlg);
+        return TRUE;
+    }
+    return DefDlgProcW(hDlg, msg, wParam, lParam);
 }
-*/
+
+void EditGoto()
+{
+    HWND hDlg = CreateWindowExW(WS_EX_DLGMODALFRAME, L"#32770", L"Go To Line",
+                                WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_VISIBLE, 100, 100, 250, 140,
+                                g_hwndMain, nullptr, GetModuleHandleW(nullptr), nullptr);
+    if (hDlg)
+    {
+        HFONT hFont = reinterpret_cast<HFONT>(GetStockObject(DEFAULT_GUI_FONT));
+        CreateWindowExW(0, L"STATIC", L"Line number:", WS_CHILD | WS_VISIBLE, 15, 15, 100, 16, hDlg, nullptr, nullptr, nullptr);
+        
+        DWORD start = 0;
+        SendMessageW(g_hwndEditor, EM_GETSEL, reinterpret_cast<WPARAM>(&start), 0);
+        int curLine = (int)SendMessageW(g_hwndEditor, EM_EXLINEFROMCHAR, 0, start) + 1;
+        wchar_t buf[32];
+        wsprintfW(buf, L"%d", curLine);
+        
+        HWND hEdit = CreateWindowExW(WS_EX_CLIENTEDGE, L"EDIT", buf, WS_CHILD | WS_VISIBLE | ES_NUMBER | ES_AUTOHSCROLL, 15, 35, 210, 22, hDlg, reinterpret_cast<HMENU>(1001), nullptr, nullptr);
+        SendMessageW(hEdit, EM_SETSEL, 0, -1);
+
+        CreateWindowExW(0, L"BUTTON", L"Go To", WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON, 60, 70, 80, 25, hDlg, reinterpret_cast<HMENU>(IDOK), nullptr, nullptr);
+        CreateWindowExW(0, L"BUTTON", L"Cancel", WS_CHILD | WS_VISIBLE, 145, 70, 80, 25, hDlg, reinterpret_cast<HMENU>(IDCANCEL), nullptr, nullptr);
+        
+        for (HWND h = GetWindow(hDlg, GW_CHILD); h; h = GetWindow(h, GW_HWNDNEXT))
+            SendMessageW(h, WM_SETFONT, reinterpret_cast<WPARAM>(hFont), TRUE);
+            
+        SetWindowLongPtrW(hDlg, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(GotoDlgProc));
+        SetFocus(hEdit);
+    }
+}
 
 void FormatFont()
 {

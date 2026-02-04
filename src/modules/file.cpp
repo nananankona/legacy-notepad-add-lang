@@ -88,6 +88,7 @@ std::pair<Encoding, LineEnding> DetectEncoding(const std::vector<BYTE> &data)
 
 std::wstring DecodeText(const std::vector<BYTE> &data, Encoding enc)
 {
+    std::wstring result;
     size_t skip = 0;
     UINT codepage = CP_UTF8;
     switch (enc)
@@ -98,16 +99,22 @@ std::wstring DecodeText(const std::vector<BYTE> &data, Encoding enc)
     case Encoding::UTF16LE:
     {
         skip = 2;
+        if (data.size() < skip)
+            return L"";
         const wchar_t *wptr = reinterpret_cast<const wchar_t *>(data.data() + skip);
-        return std::wstring(wptr, (data.size() - skip) / 2);
+        result = std::wstring(wptr, (data.size() - skip) / 2);
+        std::replace(result.begin(), result.end(), L'\0', L' ');
+        return result;
     }
     case Encoding::UTF16BE:
     {
         skip = 2;
-        std::wstring result;
+        if (data.size() < skip)
+            return L"";
         result.reserve((data.size() - skip) / 2);
         for (size_t i = skip; i + 1 < data.size(); i += 2)
             result += static_cast<wchar_t>((data[i] << 8) | data[i + 1]);
+        std::replace(result.begin(), result.end(), L'\0', L' ');
         return result;
     }
     case Encoding::ANSI:
@@ -123,7 +130,7 @@ std::wstring DecodeText(const std::vector<BYTE> &data, Encoding enc)
     int wlen = MultiByteToWideChar(codepage, 0, ptr, len, nullptr, 0);
     if (wlen <= 0)
         return L"";
-    std::wstring result(wlen, 0);
+    result.assign(wlen, 0);
     MultiByteToWideChar(codepage, 0, ptr, len, &result[0], wlen);
     std::replace(result.begin(), result.end(), L'\0', L' ');
     return result;
