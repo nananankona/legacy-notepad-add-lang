@@ -38,7 +38,7 @@ static DWORD CALLBACK StreamInCallback(DWORD_PTR dwCookie, LPBYTE pbBuff, LONG c
         *pcb = 0;
         return 0;
     }
-    size_t toCopy = std::min(static_cast<size_t>(cb), remaining);
+    size_t toCopy = (static_cast<size_t>(cb) < remaining) ? static_cast<size_t>(cb) : remaining;
     memcpy(pbBuff, reinterpret_cast<const BYTE *>(pCookie->text->c_str()) + pCookie->pos, toCopy);
     pCookie->pos += toCopy;
     *pcb = static_cast<LONG>(toCopy);
